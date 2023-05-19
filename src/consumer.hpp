@@ -40,7 +40,7 @@ public:
     void forceShutdown();
 
 private:
-    size_t workerRoutine(size_t workerIndex, std::promise<size_t> result);
+    void workerRoutine(size_t workerIndex, std::promise<size_t> result);
     bool isPrime(size_t value) const noexcept;
 
 private:

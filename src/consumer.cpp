@@ -20,11 +20,10 @@ Consumer::~Consumer() {
         }
     }
 }
-using namespace std::chrono_literals;
-size_t Consumer::workerRoutine(size_t workerIndex, std::promise<size_t> result) {
+
+void Consumer::workerRoutine(size_t workerIndex, std::promise<size_t> result) {
     size_t primeNumsCount = 0;
     while(true) {
-        std::this_thread::sleep_for(1s);
         event_t task;
         bool taskTaken = false;
         for(size_t i = 0; i < m_Workers.size(); ++i) {
@@ -60,13 +59,13 @@ bool Consumer::isPrime(size_t value) const noexcept {
 }
 
 size_t Consumer::waitForResult() {
-        for(auto& q : m_Queues) {
-            q.done();
-        }
+    for(auto& q : m_Queues) {
+        q.done();
+    }
 
-        return std::accumulate(m_Result.begin(), m_Result.end(), 0,
-                           [] (size_t value,auto& e) {
-       return value + e.get();
+    return std::accumulate(m_Result.begin(), m_Result.end(), 0,
+                       [] (size_t value,auto& e) {
+        return value + e.get();
     });
 }
 

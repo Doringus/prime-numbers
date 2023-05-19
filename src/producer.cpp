@@ -20,8 +20,6 @@ void Producer::start() {
     }
 }
 
-
-using namespace std::chrono_literals;
 void Producer::workerRoutine(size_t eventsToGenerate, const std::atomic_bool& isRunning,
                              std::shared_ptr<Consumer> taskSystem) const {
     std::random_device rd;
@@ -29,10 +27,9 @@ void Producer::workerRoutine(size_t eventsToGenerate, const std::atomic_bool& is
     std::uniform_int_distribution dist {0, 1'000'000};
 
     while(eventsToGenerate != 0 && m_IsRunning) {
-        std::this_thread::sleep_for(2s);
         int value = dist(generator);
         event_t event {value, std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
-        m_TaskSystem->submit(std::move(event));
+        m_TaskSystem->submit(event);
         eventsToGenerate--;
     }
 }
