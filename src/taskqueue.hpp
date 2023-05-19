@@ -34,10 +34,10 @@ public:
     bool pop(T& task) {
         std::unique_lock lock {m_Mutex };
 
-        while(m_Tasks.empty() && !m_IsDone) {
+        while(m_Tasks.empty() && !m_IsDone && !m_IsBlocked) {
             m_NotEmpty.wait(lock);
         }
-        if (m_Tasks.empty()) {
+        if (m_Tasks.empty() || m_IsBlocked) {
             return false;
         }
         takeLocked(task);
@@ -47,7 +47,7 @@ public:
     bool tryPop(T& task) {
         {
             std::unique_lock lock {m_Mutex, std::defer_lock};
-            if(!lock.try_lock() || m_Tasks.empty()) {
+            if(!lock.try_lock() || m_Tasks.empty() || m_IsBlocked) {
                 return false;
             }
             takeLocked(task);
@@ -55,10 +55,21 @@ public:
         return true;
     }
 
+    /**
+     * Called when there are no incoming tasks
+     */
     void done() {
         {
             std::unique_lock lock{ m_Mutex };
             m_IsDone = true;
+        }
+        m_NotEmpty.notify_all();
+    }
+
+    void forceShutdown() {
+        {
+            std::unique_lock lock{ m_Mutex };
+            m_IsBlocked = true;
         }
         m_NotEmpty.notify_all();
     }
@@ -70,6 +81,7 @@ private:
 
 private:
     bool m_IsDone {false};
+    bool m_IsBlocked {false};
     std::deque<T> m_Tasks;
     mutable std::mutex m_Mutex; // Guards m_Tasks
     std::condition_variable m_NotEmpty;

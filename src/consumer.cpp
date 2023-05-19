@@ -74,3 +74,14 @@ void Consumer::stop() {
     }
 }
 
+void Consumer::forceStop() {
+    m_Stopped = true;
+    for(auto& q : m_Queues) {
+        q.forceShutdown();
+    }
+
+    for(auto& w : m_Workers) {
+        w.join();
+    }
+}
+

@@ -29,6 +29,7 @@ public:
 
     size_t getResult();
     void stop();
+    void forceStop();
 
 private:
     size_t workerRoutine(size_t workerIndex, std::promise<size_t> result);

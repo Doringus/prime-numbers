@@ -10,7 +10,15 @@ class Producer final {
 public:
     Producer(std::shared_ptr<Consumer> taskSystem, const std::vector<size_t>& eventsToGenerate);
 
+    /**
+     * Blocks calling thread until all events are sent
+     */
     void start();
+
+    /**
+     * Shutdown producer even if not all events are sent
+     */
+    void forceShutdown();
 private:
     void workerRoutine(size_t eventsToGenerate, const std::atomic_bool& isRunning, std::shared_ptr<Consumer> taskSystem) const;
 

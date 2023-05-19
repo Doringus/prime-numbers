@@ -18,7 +18,6 @@ void Producer::start() {
     }
 }
 
-
 void Producer::workerRoutine(size_t eventsToGenerate, const std::atomic_bool& isRunning,
                              std::shared_ptr<Consumer> taskSystem) const {
     std::random_device rd;
@@ -31,4 +30,8 @@ void Producer::workerRoutine(size_t eventsToGenerate, const std::atomic_bool& is
         m_TaskSystem->submit(event);
         eventsToGenerate--;
     }
+}
+
+void Producer::forceShutdown() {
+    m_IsRunning = false;
 }
