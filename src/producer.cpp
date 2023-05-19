@@ -1,9 +1,11 @@
 #include "producer.hpp"
 
 #include <random>
+#include <chrono>
 
 Producer::Producer(std::shared_ptr<Consumer> taskSystem, const std::vector<size_t>& eventsToGenerate)
     : m_TaskSystem(std::move(taskSystem)),  m_EventsToGenerate(eventsToGenerate) { }
+
 
 void Producer::start() {
     m_IsRunning = true;
@@ -13,11 +15,13 @@ void Producer::start() {
         });
     }
 
-    for(auto& w : m_Workers) {
-        w.join();
+    for(auto& worker : m_Workers) {
+        worker.join();
     }
 }
 
+
+using namespace std::chrono_literals;
 void Producer::workerRoutine(size_t eventsToGenerate, const std::atomic_bool& isRunning,
                              std::shared_ptr<Consumer> taskSystem) const {
     std::random_device rd;
@@ -25,9 +29,10 @@ void Producer::workerRoutine(size_t eventsToGenerate, const std::atomic_bool& is
     std::uniform_int_distribution dist {0, 1'000'000};
 
     while(eventsToGenerate != 0 && m_IsRunning) {
+        std::this_thread::sleep_for(2s);
         int value = dist(generator);
-        event_t event {value};
-        m_TaskSystem->submit(event);
+        event_t event {value, std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
+        m_TaskSystem->submit(std::move(event));
         eventsToGenerate--;
     }
 }
@@ -35,3 +40,4 @@ void Producer::workerRoutine(size_t eventsToGenerate, const std::atomic_bool& is
 void Producer::forceShutdown() {
     m_IsRunning = false;
 }
+

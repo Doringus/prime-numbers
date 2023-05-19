@@ -15,13 +15,16 @@ Consumer::Consumer(size_t workersCount) : m_WorkersCount(workersCount), m_Queues
 
 Consumer::~Consumer() {
     if(!m_Stopped) {
-        stop();
+        for(auto& w : m_Workers) {
+            w.join();
+        }
     }
 }
-
+using namespace std::chrono_literals;
 size_t Consumer::workerRoutine(size_t workerIndex, std::promise<size_t> result) {
     size_t primeNumsCount = 0;
     while(true) {
+        std::this_thread::sleep_for(1s);
         event_t task;
         bool taskTaken = false;
         for(size_t i = 0; i < m_Workers.size(); ++i) {
@@ -56,25 +59,18 @@ bool Consumer::isPrime(size_t value) const noexcept {
     return true;
 }
 
-size_t Consumer::getResult() {
-    return std::accumulate(m_Result.begin(), m_Result.end(), 0,
+size_t Consumer::waitForResult() {
+        for(auto& q : m_Queues) {
+            q.done();
+        }
+
+        return std::accumulate(m_Result.begin(), m_Result.end(), 0,
                            [] (size_t value,auto& e) {
        return value + e.get();
     });
 }
 
-void Consumer::stop() {
-    m_Stopped = true;
-    for(auto& q : m_Queues) {
-        q.done();
-    }
-
-    for(auto& w : m_Workers) {
-        w.join();
-    }
-}
-
-void Consumer::forceStop() {
+void Consumer::forceShutdown() {
     m_Stopped = true;
     for(auto& q : m_Queues) {
         q.forceShutdown();

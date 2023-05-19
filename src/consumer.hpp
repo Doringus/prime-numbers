@@ -1,11 +1,13 @@
 #pragma once
 
 #include <future>
+#include <chrono>
 
 #include "taskqueue.hpp"
 
 struct event_t {
     int value;
+    std::time_t time;
 };
 
 /**
@@ -27,9 +29,15 @@ public:
         m_Queues[i % m_WorkersCount].push(std::forward<T>(task));
     }
 
-    size_t getResult();
-    void stop();
-    void forceStop();
+    /**
+     * Blocks calling thread untill all events are processed
+     */
+    size_t waitForResult();
+
+    /**
+     * Unblocks thread in waitForResult ASAP
+     */
+    void forceShutdown();
 
 private:
     size_t workerRoutine(size_t workerIndex, std::promise<size_t> result);
